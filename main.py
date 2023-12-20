@@ -1,4 +1,4 @@
-# load data.csv wkuhffksfhslkdf
+# load data.csv
 
 import pandas as pd
 import numpy as np
