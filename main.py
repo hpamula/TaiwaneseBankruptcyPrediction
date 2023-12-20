@@ -43,10 +43,11 @@ class Classification:
     def normalization(self):
         self.X = normalize(self.X.values, axis=0)
         self.y = normalize(self.y.values)
-    def splitDataSet():
-        X_train, X_temp, Y_train, Y_temp = train_test_split(X, y, test_size=0.3, random_state=12)
-        X_test, X_val, Y_test, Y_val = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=12)
-    def feedForwardNN():
+    def splitDataSet(self):
+        self.X_train, X_temp, self.Y_train, Y_temp = train_test_split(self.X, self.y, test_size=0.3, random_state=12)
+        self.X_test, self.X_val, self.Y_test, self.Y_val = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=12)
+    def feedForwardNN(self):
+        pass
         
 c = Classification()
 c.correlation()
