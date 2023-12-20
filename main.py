@@ -18,10 +18,9 @@ class Classification:
         self.data = pd.read_csv('data.csv')
         # First column = Y (bankrupt or not)
         # Rest of column (2-95) = X (financial ratios)
-
         self.X = self.data.iloc[:, 1:95]
         self.y = self.data.iloc[:, 0]
-
+        self.normalization()
     def correlation(self):
         print(self.data.head())
         corr = self.data.corr()
@@ -30,7 +29,6 @@ class Classification:
         plt.figure(figsize=(12, 10))
         sns.heatmap(corr, cmap='coolwarm', linewidths=.2)
         plt.show()
-
     def xgboost(self):
         model = XGBClassifier()
         model.fit(self.X_train, self.Y_train)
@@ -38,19 +36,17 @@ class Classification:
         # evaluate predictions
         accuracy = accuracy_score(self.Y_test, y_pred)
         print("Accuracy: %.2f%%" % (accuracy * 100.0))
-
     def fillMissingValues(self):
         for column in self.X.isna().sum()[self.X.isna().sum() > 0].index.values:
-            self.X[column].fillna(X[column].median(), inplace=True)
+            self.X[column].fillna(self.X[column].median(), inplace=True)
         print(self.X.isna().sum())
-
     def normalization(self):
         self.X = normalize(self.X.values, axis=0)
         self.y = normalize(self.y.values)
-
-
-    # X_train, X_temp, Y_train, Y_temp = train_test_split(X, y, test_size=0.3, random_state=12)
-    # X_test, X_val, Y_test, Y_val = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=12)
-
+    def splitDataSet():
+        X_train, X_temp, Y_train, Y_temp = train_test_split(X, y, test_size=0.3, random_state=12)
+        X_test, X_val, Y_test, Y_val = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=12)
+    def feedForwardNN():
+        
 c = Classification()
 c.correlation()
