@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from IPython.display import Javascript
 import numpy as np
 from xgboost import XGBClassifier
-from sklearn.metrics import *
+from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score, roc_curve, auc, confusion_matrix
 
 plt.interactive(False)
 plt.style.use('dark_background')
@@ -88,14 +88,19 @@ class Classification:
         print("Accuracy Validation: %.2f%%" % (accuracy_validation * 100.0))
 
     def xgboost(self):
-        model = XGBClassifier(objective='binary:logistic', seed=12)
+        ratio = len(self.Y_train[self.Y_train == 0]) / len(self.Y_train[self.Y_train == 1])
+        model = XGBClassifier(objective='binary:logistic', seed=12, scale_pos_weight=ratio)
+        print("Ratio: ", ratio)
         model.fit(self.X_train, self.Y_train)
 
         self.investigate_feature_importance(model)
 
         # Make a prediction on validation set
-        y_val_pred = model.predict(self.X_val)
         y_val_scores = model.predict_proba(self.X_val)[:, 1]
+        #y_val_pred = model.predict(self.X_val)
+        y_val_pred = (y_val_scores > 0.02).astype(int)
+
+
 
         # Plot the confusion matrix
         self.plot_confusion_matrix(model, self.Y_val, y_val_pred)
@@ -107,14 +112,6 @@ class Classification:
         accuracy_validation = accuracy_score(self.Y_val, y_val_pred)
         print("Accuracy Train: %.2f%%" % (accuracy_train * 100.0))
         print("Accuracy Validation: %.2f%%" % (accuracy_validation * 100.0))
-
-        # F1 score
-        print("F1 score: %.2f%%" % (f1_score(self.Y_val, y_val_pred) * 100.0))
-        # Sensitivity and specificity
-
-        print("Sensitivity: %.2f%%" % (recall_score(self.Y_val, y_val_pred) * 100.0))
-        print("Specificity: %.2f%%" % (precision_score(self.Y_val, y_val_pred) * 100.0))
-
 
     def investigate_feature_importance(self, model):
         feature_names = self.X.columns
@@ -147,7 +144,6 @@ class Classification:
         self.X = self.X[feature_importance_df[feature_importance_df['importance'] > quantile_25]['feature'].values]
         print(self.X.columns)
 
-
     def plot_roc_curve(self, model, y_true, y_score):
         fpr, tpr, thresholds = roc_curve(y_true, y_score)
         roc_auc = auc(fpr, tpr)
@@ -178,6 +174,21 @@ class Classification:
         plt.xlabel('Predicted label')
         #   all_sample_title = 'Accuracy Score: {0}'.format(model.score(y_true, y_pred))
         #   plt.title(all_sample_title, size=15)
+        # Extract TN, FP, FN, TP
+        tn, fp, fn, tp = cm.ravel()
+        print("True Negative: ", tn)
+        print("False Positive: ", fp)
+        print("False Negative: ", fn)
+        print("True Positive: ", tp)
+
+        # Calculate sensitivity, specificity, and precision
+        sensitivity = tp / (tp + fn)
+        specificity = tn / (tn + fp)
+        precision = tp / (tp + fp)
+        print("Sensitivity: ", sensitivity)
+        print("Specificity: ", specificity)
+        print("Precision: ", precision)
+
         plt.show()
 
     def remove_correlated_features(self, correlation_matrix, threshold=0.8):
