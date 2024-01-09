@@ -1,9 +1,9 @@
 import pandas as pd
 import seaborn as sns
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import normalize
 from matplotlib import pyplot as plt
-import numpy as np
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, roc_curve, auc, confusion_matrix
 
@@ -76,7 +76,8 @@ class Classification:
         learning_rate = 0.2
         subsample = 0.8
 
-        model = XGBClassifier(objective='binary:logistic', seed=12, scale_pos_weight=ratio,
+        model = XGBClassifier(objective='binary:logistic', seed=12,
+                              scale_pos_weight=ratio,
                               reg_alpha=1e-4,
                               reg_lambda=1e-4,
                               gamma=0.1,
@@ -96,18 +97,47 @@ class Classification:
         # Set the threshold to 0.45 to classify the samples
         # Czyli jesli prawdopodobienstwo jest wieksze niz 0.45 (defautowo jest 0.5) to firma jest bankrutem
         # Zmniejszamy threshold, bo przeoczenia bankructwa jest bardziej ryzykowne
-        y_val_pred = (y_val_scores > 0.45).astype(int)
+        y_val_pred = (y_val_scores > 0.35).astype(int)
 
-        # Plot the confusion matrix
-        self.plot_confusion_matrix(model, self.Y_val, y_val_pred)
+        self.plot_confusion_matrix(self.Y_val, y_val_pred)
+        self.plot_roc_curve(self.Y_val, y_val_scores)
 
-        # Plot the ROC curve
-        self.plot_roc_curve(model, self.Y_val, y_val_scores)
         # evaluate predictions
         accuracy_train = accuracy_score(self.Y_train, model.predict(self.X_train))
         accuracy_validation = accuracy_score(self.Y_val, y_val_pred)
         print("Accuracy Train: %.2f%%" % (accuracy_train * 100.0))
         print("Accuracy Validation: %.2f%%" % (accuracy_validation * 100.0))
+
+    def random_forest_classifier(self):
+
+        ratio = len(self.Y_train[self.Y_train == 0]) / len(self.Y_train[self.Y_train == 1])
+
+        model = RandomForestClassifier(n_estimators=110, max_depth=5, random_state=12, class_weight='balanced')
+        model.fit(self.X_train, self.Y_train)
+
+        y_val_scores = model.predict_proba(self.X_val)[:, 1]
+        y_val_pred = (y_val_scores > 0.5).astype(int)
+
+        #      self.plot_confusion_matrix(self.Y_val, y_val_pred)
+        #      self.plot_roc_curve(self.Y_val, y_val_pred)
+
+        # evaluate predictions
+        accuracy_train = accuracy_score(self.Y_train, model.predict(self.X_train))
+        accuracy_validation = accuracy_score(self.Y_val, y_val_pred)
+        print("Accuracy Train: %.2f%%" % (accuracy_train * 100.0))
+        print("Accuracy Validation: %.2f%%" % (accuracy_validation * 100.0))
+
+        # Test the model
+        print()
+
+        y_test_scores = model.predict_proba(self.X_test)[:, 1]
+        y_test_pred = (y_test_scores > 0.5).astype(int)
+
+        self.plot_roc_curve(self.Y_test, y_test_pred)
+        self.plot_confusion_matrix(self.Y_test, y_test_pred)
+
+        accuracy_test = accuracy_score(self.Y_test, y_test_pred)
+        print("Accuracy Test: %.2f%%" % (accuracy_test * 100.0))
 
     def investigate_feature_importance(self, model):
         """
@@ -136,7 +166,6 @@ class Classification:
         # Count the median of feature importance
         median = feature_importance_df['importance'].median()  # quantile(0.5)
         quantile_25 = feature_importance_df['importance'].quantile(0.25)
-        # quantile_75 = feature_importance_df['importance'].quantile(0.75)
         print("Median: ", median)
         print("Quantile 25: ", quantile_25)
 
@@ -153,7 +182,8 @@ class Classification:
         plt.tight_layout()
         plt.show()
 
-    def plot_roc_curve(self, model, y_true, y_score):
+    @staticmethod
+    def plot_roc_curve(y_true, y_score):
         """
         Rysuje krzywa ROC
         """
@@ -171,7 +201,8 @@ class Classification:
         plt.xlabel('False Positive Rate')
         plt.show()
 
-    def plot_confusion_matrix(self, model, y_true, y_pred):
+    @staticmethod
+    def plot_confusion_matrix(y_true, y_pred):
         """
         Rysuje macierz bledow
         """
@@ -218,25 +249,11 @@ class Classification:
         """
         Metoda nie dziala poprawnie
         """
-        filtered_entries = np.copy(self.X)
-
-        for col in range(self.X.shape[1]):
-            column_data = self.X[:, col]
-
-            q1 = np.percentile(column_data, 25)
-            q3 = np.percentile(column_data, 75)
-            iqr = q3 - q1
-
-            lower_bound = q1 - (1.5 * iqr)
-            upper_bound = q3 + (1.5 * iqr)
-
-            filtered_entries[:, col] = np.where((column_data < lower_bound | (column_data > upper_bound), np.nan,
-                                                 column_data))
-
-        self.X = filtered_entries
 
     def feedForwardNN(self):
-        pass
+        """
+        To implement
+        """
 
 
 c = Classification()
@@ -245,9 +262,10 @@ c = Classification()
 # # Exploratory data analysis
 c.fill_missing_values()
 # c.remove_outliers()
-correlation_matrix = c.correlation_matrix_and_plot(False)
+correlation_matrix = c.correlation_matrix_and_plot(True)
 c.remove_correlated_features(correlation_matrix, 0.8)
 correlation_matrix2 = c.correlation_matrix_and_plot(True)
 
 c.test_train_split()
-c.xgboost()
+# c.xgboost()
+c.random_forest_classifier()
