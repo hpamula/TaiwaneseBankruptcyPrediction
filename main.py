@@ -195,6 +195,6 @@ class Classification:
 c = Classification()
 c.fillMissingValues()
 c.remove_correlated_features(c.correlation())
-# c.normalization()
+c.normalization()
 c.test_train_split()
 c.random_forest_classifier()
