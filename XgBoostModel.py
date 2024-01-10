@@ -257,15 +257,15 @@ class Classification:
 
 
 c = Classification()
-
+print(type(c.X))
 # c.correlation()
 # # Exploratory data analysis
-c.fill_missing_values()
-# c.remove_outliers()
-correlation_matrix = c.correlation_matrix_and_plot(True)
-c.remove_correlated_features(correlation_matrix, 0.8)
-correlation_matrix2 = c.correlation_matrix_and_plot(True)
+# c.fill_missing_values()
+# # c.remove_outliers()
+# correlation_matrix = c.correlation_matrix_and_plot(True)
+# c.remove_correlated_features(correlation_matrix, 0.8)
+# correlation_matrix2 = c.correlation_matrix_and_plot(True)
 
-c.test_train_split()
-# c.xgboost()
-c.random_forest_classifier()
+# c.test_train_split()
+# # c.xgboost()
+# c.random_forest_classifier()
